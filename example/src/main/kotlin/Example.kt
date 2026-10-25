@@ -36,7 +36,7 @@ import kotlinx.html.p
 import kotlinx.html.title
 
 const val NONCE = "testnonce"
-const val NASTY = "</script><script>window.__pwned=1</script>  &<>\"'"
+const val NASTY = "</script><script>window.__pwned=1</script>\u2028\u2029&<>\"'"
 
 val pageProps: Map<String, Any?> = mapOf("plan" to "pro", "role" to "admin", "beta" to true, "seats" to 3)
 
