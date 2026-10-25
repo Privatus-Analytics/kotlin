@@ -45,6 +45,14 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+    // CI runs Gradle on Java 21 and the tests on each supported Java with
+    // -PtestJava=17 (or 21, 25), as Gradle 8 cannot itself run on Java 25.
+    providers.gradleProperty("testJava").orNull?.let { testJava ->
+        javaLauncher.set(
+            javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(testJava)) },
+        )
+        doFirst { println("Testing on Java ${javaLauncher.get().metadata.javaRuntimeVersion}") }
+    }
     testLogging {
         events("failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

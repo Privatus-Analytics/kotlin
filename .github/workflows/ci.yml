@@ -21,9 +21,16 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: ${{ matrix.java }}
+          # The last one listed (21) runs Gradle. The tests run on matrix.java.
+          java-version: |
+            ${{ matrix.java }}
+            21
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew test -PktorVersion=${{ matrix.ktor }}
+      - run: >-
+          ./gradlew test -PktorVersion=${{ matrix.ktor }}
+          -PtestJava=${{ matrix.java }}
+          -Porg.gradle.java.installations.fromEnv=JAVA_HOME_${{ matrix.java }}_X64
+          -Porg.gradle.java.installations.auto-download=false
 
   lint-and-build:
     runs-on: ubuntu-24.04
