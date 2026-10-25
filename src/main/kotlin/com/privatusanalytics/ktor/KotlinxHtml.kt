@@ -15,7 +15,8 @@ import kotlinx.html.unsafe
  *
  *     call.respondHtml { head { title("My app"); privatusAnalytics(call) } }
  *
- * Prints nothing without a site id, or outside the enabled environments.
+ * When the tag is off (no site id, or outside the enabled environments) it prints only the
+ * queue stub when that is on, and otherwise nothing.
  */
 public fun HEAD.privatusAnalytics(
     call: ApplicationCall,

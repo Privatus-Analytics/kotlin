@@ -3,10 +3,14 @@ package com.privatusanalytics.ktor
 import io.ktor.server.application.ApplicationCall
 
 /**
- * Builds the script tag. Returns an empty string when no tag should print.
+ * Builds the script tag.
  *
  * Before the tracker tag it can also print the queue stub ([TagOptions.queueStub]) and the
  * page props script ([TagOptions.props]), each with the CSP nonce when there is one.
+ *
+ * When the tag is off (disabled, or no site id) and the queue stub is on, only the queue stub
+ * prints, so `privatus.track()` calls in your own JavaScript never fail. With the queue stub
+ * off it prints an empty string. The props block is not called when the tag is off.
  */
 public object PrivatusTag {
     public const val PROPS_FUNCTION: String = "privatusPageProps"
@@ -25,14 +29,15 @@ public object PrivatusTag {
         options: TagOptions = TagOptions(),
         call: ApplicationCall? = null,
     ): String {
-        if (!shouldRender(config, options, call)) return ""
+        val queueStub = option(options, "queueStub", options.queueStub, config.queueStub) == true
+        if (!shouldRender(config, options, call)) {
+            return if (queueStub) inlineScript(QUEUE_STUB, options.nonce ?: config.nonceFor(call)) else ""
+        }
 
         val nonce = options.nonce ?: config.nonceFor(call)
         val propsJson = PrivatusPageProps.json(pageProps(config, options, call))
         val html = mutableListOf<String>()
-        if (option(options, "queueStub", options.queueStub, config.queueStub) == true) {
-            html += inlineScript(QUEUE_STUB, nonce)
-        }
+        if (queueStub) html += inlineScript(QUEUE_STUB, nonce)
         if (propsJson != null) html += inlineScript("window.$PROPS_FUNCTION=function(){return $propsJson}", nonce)
         html += scriptTag(attributes(config, options, nonce, propsJson != null))
         return html.joinToString("\n")

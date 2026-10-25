@@ -14,7 +14,8 @@ import io.ktor.utils.io.writer
 import kotlinx.coroutines.coroutineScope
 
 /**
- * Adds the tag just before `</head>` in HTML responses. Off unless `autoInject = true`.
+ * Adds the tag just before `</head>` in HTML responses. Off unless `autoInject = true`, or the
+ * route has the [PrivatusAutoInject] plugin.
  * Only touches status 200, uncompressed `text/html` that is not an Ajax request and has no tag yet.
  */
 internal object AutoInject {
@@ -54,7 +55,7 @@ internal object AutoInject {
         config: PrivatusAnalyticsConfig,
         body: OutgoingContent,
     ): Boolean {
-        if (!config.autoInject) return false
+        if (!config.autoInject && !call.attributes.contains(AutoInjectRouteKey)) return false
         val status = body.status ?: call.response.status() ?: HttpStatusCode.OK
         if (status != HttpStatusCode.OK) return false
         val type = body.contentType ?: call.response.headers[HttpHeaders.ContentType]?.let(ContentType::parse)

@@ -113,6 +113,18 @@ Ktor's `Compression` plugin, so compressed responses work, and it sets the
 right `Content-Length`. Responses that already carry a `Content-Encoding`
 header are left alone.
 
+To add it to some routes only, leave `autoInject` off and install
+`PrivatusAutoInject` on those routes:
+
+```kotlin
+routing {
+    route("/blog") {
+        install(PrivatusAutoInject)
+        get { call.respondText(page, ContentType.Text.Html) }
+    }
+}
+```
+
 ## Configuration
 
 Every setting is optional except the site id.
@@ -150,7 +162,7 @@ install(PrivatusAnalytics) {
 | `extraAttributes` | none | Any other `data-*` attribute. A `true` value prints the bare name |
 | `props { call -> }` | none | Page props sent with every pageview and event. See below |
 | `nonce { call -> }` | none | Your Content Security Policy nonce, added to every script |
-| `queueStub` | `false` | Prints a small script first, so `privatus.track` calls made before the tracker loads are kept and sent later |
+| `queueStub` | `false` | Prints a small script first, so `privatus.track` calls made before the tracker loads are kept and sent later. It still prints when the tag is off, so those calls never fail |
 
 Each tracker attribute is explained in the [script attributes
 reference](https://privatusanalytics.com/docs/tracker/attributes), and the
@@ -350,9 +362,11 @@ sends them once the tracker is ready:
 install(PrivatusAnalytics) { queueStub = true }
 ```
 
-or for one page: `privatusAnalytics(call) { queueStub = true }`. Like the tag,
-the stub prints only where the tag is on, so in development use
-`window.privatus && privatus.track(...)`.
+or for one page: `privatusAnalytics(call) { queueStub = true }`. The stub
+prints even where the tag is off (in development, with `enabled = false`, or
+with no site id). Then only the stub prints: no tracker and no page props. So
+you can always call `privatus.track(...)`. In development the calls just wait
+in the queue and are never sent. Auto inject adds nothing when the tag is off.
 
 ### See the results
 
@@ -374,6 +388,15 @@ your server. Keep people out of your props and event props: no names, emails
 or user ids. See the [privacy
 documentation](https://privatusanalytics.com/docs/privacy) for what is
 collected.
+
+If you have a privacy policy, it should say which tools handle your visitors' data. You can paste this:
+
+> This website uses [Privatus Analytics](https://privatusanalytics.com/privacy-analytics) to count visits. It
+> does not use cookies and does not follow you from one website to another. Your IP address is used for a moment
+> to count visits and is never stored.
+
+Change it to fit your site. The [privacy policy generator](https://privatusanalytics.com/tools/privacy-policy-generator)
+makes a longer version with your site's name in it.
 
 ## Development
 

@@ -157,6 +157,43 @@ class PrivatusTagTest {
     }
 
     @Test
+    fun `off with the queue stub prints only the stub with the nonce`() {
+        config.enabled = false
+        config.props { error("should not run") }
+
+        assertEquals(
+            """<script nonce="abc">${PrivatusTag.QUEUE_STUB}</script>""",
+            render {
+                queueStub = true
+                nonce = "abc"
+                props = mapOf("plan" to "pro")
+            },
+        )
+    }
+
+    @Test
+    fun `off without the queue stub prints nothing`() {
+        config.enabled = false
+
+        assertEquals(
+            "",
+            render {
+                queueStub = false
+                nonce = "abc"
+                props = mapOf("plan" to "pro")
+            },
+        )
+    }
+
+    @Test
+    fun `no site id with the queue stub prints only the stub`() {
+        config.siteId = null
+        config.queueStub = true
+
+        assertEquals("""<script nonce="abc">${PrivatusTag.QUEUE_STUB}</script>""", render { nonce = "abc" })
+    }
+
+    @Test
     fun `queue stub prints the official stub first`() {
         config.queueStub = true
         val parts =

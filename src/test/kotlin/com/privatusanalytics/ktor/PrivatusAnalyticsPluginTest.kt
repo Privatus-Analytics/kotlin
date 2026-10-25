@@ -18,6 +18,7 @@ import io.ktor.server.plugins.compression.minimumSize
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -245,6 +246,54 @@ class PrivatusAnalyticsPluginTest {
     @Test
     fun `auto inject adds nothing outside the enabled environments`() =
         app(environmentName = "test", configure = { autoInject = true }) {
+            assertEquals(plain, client.get("/plain").html())
+        }
+
+    @Test
+    fun `auto inject adds nothing when the tag is off, even with the queue stub`() =
+        app(environmentName = "test", configure = {
+            autoInject = true
+            queueStub = true
+        }) {
+            assertEquals(plain, client.get("/plain").html())
+        }
+
+    @Test
+    fun `the kotlinx html helper prints only the queue stub when the tag is off`() =
+        app(environmentName = "test", configure = {
+            queueStub = true
+            props { error("should not run") }
+            nonce { "n0nce" }
+        }) {
+            val body = client.get("/").html()
+
+            assertContains(body, """<script nonce="n0nce">${PrivatusTag.QUEUE_STUB}</script>""")
+            assertFalse(body.contains("pa.js"))
+            assertFalse(body.contains("privatusPageProps"))
+        }
+
+    @Test
+    fun `PrivatusAutoInject turns auto inject on for one route only`() =
+        testApplication {
+            environment { config = MapApplicationConfig("ktor.deployment.environment" to "production") }
+            application {
+                install(PrivatusAnalytics) {
+                    env = { null }
+                    siteId = "pa_TEST123456"
+                }
+                routing {
+                    route("/auto") {
+                        install(PrivatusAutoInject)
+                        get { call.respondText(plain, ContentType.Text.Html) }
+                    }
+                    get("/plain") { call.respondText(plain, ContentType.Text.Html) }
+                }
+            }
+
+            val response = client.get("/auto")
+            val body = response.html()
+            assertContains(body, "$snippet\n</head>")
+            assertEquals(body.toByteArray().size.toString(), response.headers[HttpHeaders.ContentLength])
             assertEquals(plain, client.get("/plain").html())
         }
 

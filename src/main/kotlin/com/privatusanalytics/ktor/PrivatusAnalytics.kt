@@ -4,7 +4,9 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationPlugin
+import io.ktor.server.application.RouteScopedPlugin
 import io.ktor.server.application.createApplicationPlugin
+import io.ktor.server.application.createRouteScopedPlugin
 import io.ktor.server.response.ApplicationSendPipeline
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelinePhase
@@ -39,6 +41,24 @@ public val PrivatusAnalytics: ApplicationPlugin<PrivatusAnalyticsConfig> =
         }
     }
 
+internal val AutoInjectRouteKey: AttributeKey<Unit> = AttributeKey("PrivatusAutoInjectRoute")
+
+/**
+ * Turns auto inject on for some routes only, and leaves `autoInject` off for the rest.
+ * Install [PrivatusAnalytics] in the application first; this plugin uses its settings.
+ *
+ *     routing {
+ *         route("/blog") {
+ *             install(PrivatusAutoInject)
+ *             get { call.respondText(page, ContentType.Text.Html) }
+ *         }
+ *     }
+ */
+public val PrivatusAutoInject: RouteScopedPlugin<Unit> =
+    createRouteScopedPlugin("PrivatusAutoInject") {
+        onCall { call -> call.attributes.put(AutoInjectRouteKey, Unit) }
+    }
+
 /** The plugin settings for this application, or the defaults when the plugin is not installed. */
 public val Application.privatusAnalyticsConfig: PrivatusAnalyticsConfig
     get() = attributes.getOrNull(PrivatusAnalyticsConfigKey) ?: defaultConfig
@@ -47,7 +67,8 @@ private val defaultConfig = PrivatusAnalyticsConfig()
 
 /**
  * The Privatus Analytics tag for this request, as an HTML string for the head.
- * Prints nothing without a site id, or outside the enabled environments.
+ * When the tag is off (no site id, or outside the enabled environments) it prints only the
+ * queue stub when that is on, and otherwise nothing.
  *
  *     call.privatusTag()
  *     call.privatusTag { modules = listOf("engage", "auto"); props = mapOf("section" to "billing") }
