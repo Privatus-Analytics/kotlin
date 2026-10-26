@@ -49,7 +49,7 @@ Add the library to `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.privatusanalytics:privatus-analytics-ktor:1.0.0")
+    implementation("com.privatusanalytics:privatus-analytics-ktor:1.0.1")
 }
 ```
 

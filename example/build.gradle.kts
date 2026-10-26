@@ -10,7 +10,7 @@ repositories {
 val ktorVersion = "3.6.0"
 
 dependencies {
-    implementation("com.privatusanalytics:privatus-analytics-ktor:1.0.0")
+    implementation("com.privatusanalytics:privatus-analytics-ktor:1.0.1")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-html-builder:$ktorVersion")
     implementation("ch.qos.logback:logback-classic:1.5.20")

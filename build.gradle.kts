@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.privatusanalytics"
-version = "1.0.0"
+version = "1.0.1"
 
 // CI tests older Ktor 3 releases with -PktorVersion=3.0.3.
 val ktorVersion = providers.gradleProperty("ktorVersion").getOrElse("3.6.0")
